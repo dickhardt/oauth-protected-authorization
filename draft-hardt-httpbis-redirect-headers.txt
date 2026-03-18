@@ -5,8 +5,8 @@
 HTTP                                                            D. Hardt
 Internet-Draft                                                     Hellō
 Intended status: Standards Track                                 S. Goto
-Expires: 9 July 2026                                              Google
-                                                          5 January 2026
+Expires: 19 September 2026                                        Google
+                                                           18 March 2026
 
 
                          HTTP Redirect Headers
@@ -50,7 +50,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 9 July 2026.
+   This Internet-Draft will expire on 19 September 2026.
 
 Copyright Notice
 
