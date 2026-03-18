@@ -127,19 +127,23 @@ IETF 125 Shenzhen — March 2026
 
 ## Open Questions 1/3
 
-- **Q1: IETF vs. WHATWG?** 
-  - Feature for OAuth -> people that care are in IETF 
-  - Browser behavior requirements need coordination with Fetch specs
-- **Q2: Why not form_post?** 
-  - form_post exposes parameters to page JS and extensions; 
-  - most deployments use redirects
-    - adopting Redirect Headers is a library update 
-    - changing GET to POST which requires infra and request routing change
+- **Q1: IETF vs. WHATWG — split ownership?**
+  - Header semantics and IANA registration belong in HTTPBIS — OAuth and other WGs can reference
+  - Browser forwarding behavior and Sec-Redirect-Origin enforcement require a normative addition to the Fetch Living Standard
+  - Proposed: HTTPBIS owns the spec; authors coordinate a Fetch PR for browser behavior
+  
+*Does the WG agree with this split, and is there prior art we should follow?*
+
 
 ---
 
 ## Open Questions 2/3
 
+- **Q2: Why not form_post?** 
+  - form_post exposes parameters to page JS and extensions; 
+  - most deployments use redirects
+    - adopting Redirect Headers is a library update 
+    - changing GET to POST which requires infra and request routing change
 - **Q3: Why not Structured Fields Dictionary?** 
   - Redirect-Query uses a string so recipients parse it the same way as URL query strings; avoids a new encoding
 - **Q4: Relationship to Origin header?** 
