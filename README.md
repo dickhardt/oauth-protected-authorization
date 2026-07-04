@@ -1,15 +1,17 @@
-# HTTP Redirect Headers
+# OAuth Protected Authorization
 
-This is the working area for the individual Internet-Draft, "HTTP Redirect Headers".
+This is the working area for the individual Internet-Draft, "OAuth Protected Authorization".
 
-* [Editor's Copy](https://dickhardt.github.io/redirect-headers/draft-hardt-httpbis-redirect-headers.html)
-* [Datatracker Page](https://datatracker.ietf.org/doc/draft-hardt-httpbis-redirect-headers)
-* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-hardt-httpbis-redirect-headers)
-* [Compare Editor's Copy to Individual Draft](https://dickhardt.github.io/redirect-headers/#go.draft-hardt-httpbis-redirect-headers.diff)
+* [Editor's Copy](https://dickhardt.github.io/oauth-protected-authorization/draft-hardt-oauth-protected-authorization.html)
+* [Datatracker Page](https://datatracker.ietf.org/doc/draft-hardt-oauth-protected-authorization)
+* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-hardt-oauth-protected-authorization)
+* [Compare Editor's Copy to Individual Draft](https://dickhardt.github.io/oauth-protected-authorization/#go.draft-hardt-oauth-protected-authorization.diff)
+
+This document replaces [draft-hardt-httpbis-redirect-headers](https://datatracker.ietf.org/doc/draft-hardt-httpbis-redirect-headers), refocused on the OAuth use case following feedback from the HTTPBIS working group at IETF 125. The prior draft and explainer are preserved in [archive/](archive/).
 
 ## Abstract
 
-This document defines HTTP headers that enable browsers to pass redirect parameters securely during HTTP redirects without exposing them in URLs. The Redirect-Query header carries parameters traditionally sent via URL query strings, the Redirect-Origin header provides browser-verified origin authentication, and the Redirect-Path header enables path-based redirect validation. These headers address security and privacy concerns in authentication and authorization protocols such as OAuth 2.0 and OpenID Connect.
+This document defines browser support for protecting OAuth 2.0 authorization requests and authorization responses during redirect-based authorization flows. A single Structured Field header field, OAuth-Authorization, is set by the OAuth client in the redirect response that sends the browser to the authorization server, and by the authorization server in the redirect response that returns the browser to the OAuth client. In both cases the browser augments the header with the attested origin of the redirecting party and delivers it to the redirect destination. The mechanism provides security for the authorization request — the authorization server receives a browser-attested, tamper-evident statement of which origin initiated the request — and security and privacy for the authorization response: the authorization code is delivered in the browser-protected header instead of the redirect URI, and never appears in a URL, eliminating its exposure through browser history, server logs, Referer headers, analytics systems, and URL sharing. The header is generated, validated, and delivered by the browser, and is inaccessible to scripts, service workers, and browser extensions. Existing OAuth deployments continue to function unchanged; the protections activate only when the OAuth client, browser, and authorization server all support them.
 
 ## Additional Resources
 
@@ -17,7 +19,7 @@ This document defines HTTP headers that enable browsers to pass redirect paramet
 
 ## Contributing
 
-See the [guidelines for contributions](https://github.com/dickhardt/redirect-headers/blob/main/CONTRIBUTING.md).
+See the [guidelines for contributions](https://github.com/dickhardt/oauth-protected-authorization/blob/main/CONTRIBUTING.md).
 
 Contributions can be made by creating pull requests.
 The GitHub interface supports creating pull requests using the Edit (✏) button.

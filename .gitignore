@@ -14,7 +14,7 @@
 /versioned/
 Gemfile.lock
 archive.json
-draft-hardt-httpbis-redirect-headers.xml
+draft-hardt-oauth-protected-authorization.xml
 package-lock.json
 report.xml
 .DS_Store
