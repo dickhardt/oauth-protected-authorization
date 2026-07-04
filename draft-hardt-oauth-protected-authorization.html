@@ -8,7 +8,7 @@
 <meta content="Dick Hardt" name="author">
 <meta content="Sam Goto" name="author">
 <meta content="
-       This document defines browser support for protecting OAuth 2.0 authorization requests and authorization responses during redirect-based authorization flows. A single Structured Field header field, OAuth-Authorization, is set by the OAuth client in the redirect response that sends the browser to the authorization server, and by the authorization server in the redirect response that returns the browser to the OAuth client. In both cases the browser augments the header with the attested origin of the redirecting party and delivers it to the redirect destination. The mechanism provides security for the authorization request — the authorization server receives a browser-attested, tamper-evident statement of which origin initiated the request — and security and privacy for the authorization response: the authorization code is delivered in the browser-protected header instead of the redirect URI, and never appears in a URL, eliminating its exposure through browser history, server logs, Referer headers, analytics systems, and URL sharing. The header is generated, validated, and delivered by the browser, and is inaccessible to scripts, service workers, and browser extensions. Existing OAuth deployments continue to function unchanged; the protections activate only when the OAuth client, browser, and authorization server all support them. 
+       This document defines browser support for protecting OAuth 2.0 authorization requests and authorization responses during redirect-based authorization flows. A single Structured Field header field, OAuth-Authorization, is set by the OAuth client in the redirect response that sends the browser to the authorization server, and by the authorization server in the redirect response that returns the browser to the OAuth client. In both cases the browser augments the header with the attested origin of the redirecting party and delivers it to the redirect destination. The mechanism provides security for the authorization request: the authorization server receives a browser-attested, tamper-evident statement of which origin initiated the request. The mechanism provides security and privacy for the authorization response: the authorization code is delivered in the browser-protected header instead of the redirect URI, and never appears in a URL, eliminating its exposure through browser history, server logs, Referer headers, analytics systems, and URL sharing. The header is generated, validated, and delivered by the browser, and is inaccessible to scripts, service workers, and browser extensions. Existing OAuth deployments continue to function unchanged; the protections activate only when the OAuth client, browser, and authorization server all support them. 
     " name="description">
 <meta content="xml2rfc 3.34.0" name="generator">
 <meta content="oauth" name="keyword">
@@ -1088,7 +1088,7 @@ svg {
 <h1 id="title">OAuth Protected Authorization</h1>
 <section id="section-abstract">
       <h2 id="abstract"><a href="#abstract" class="selfRef">Abstract</a></h2>
-<p id="section-abstract-1">This document defines browser support for protecting OAuth 2.0 authorization requests and authorization responses during redirect-based authorization flows. A single Structured Field header field, OAuth-Authorization, is set by the OAuth client in the redirect response that sends the browser to the authorization server, and by the authorization server in the redirect response that returns the browser to the OAuth client. In both cases the browser augments the header with the attested origin of the redirecting party and delivers it to the redirect destination. The mechanism provides security for the authorization request — the authorization server receives a browser-attested, tamper-evident statement of which origin initiated the request — and security and privacy for the authorization response: the authorization code is delivered in the browser-protected header instead of the redirect URI, and never appears in a URL, eliminating its exposure through browser history, server logs, Referer headers, analytics systems, and URL sharing. The header is generated, validated, and delivered by the browser, and is inaccessible to scripts, service workers, and browser extensions. Existing OAuth deployments continue to function unchanged; the protections activate only when the OAuth client, browser, and authorization server all support them.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
+<p id="section-abstract-1">This document defines browser support for protecting OAuth 2.0 authorization requests and authorization responses during redirect-based authorization flows. A single Structured Field header field, OAuth-Authorization, is set by the OAuth client in the redirect response that sends the browser to the authorization server, and by the authorization server in the redirect response that returns the browser to the OAuth client. In both cases the browser augments the header with the attested origin of the redirecting party and delivers it to the redirect destination. The mechanism provides security for the authorization request: the authorization server receives a browser-attested, tamper-evident statement of which origin initiated the request. The mechanism provides security and privacy for the authorization response: the authorization code is delivered in the browser-protected header instead of the redirect URI, and never appears in a URL, eliminating its exposure through browser history, server logs, Referer headers, analytics systems, and URL sharing. The header is generated, validated, and delivered by the browser, and is inaccessible to scripts, service workers, and browser extensions. Existing OAuth deployments continue to function unchanged; the protections activate only when the OAuth client, browser, and authorization server all support them.<a href="#section-abstract-1" class="pilcrow">¶</a></p>
 </section>
 <section class="note" id="section-note.1">
       <h2 id="name-discussion-venues">
@@ -1359,7 +1359,7 @@ svg {
       <h2 id="name-introduction">
 <a href="#section-1" class="section-number selfRef">1. </a><a href="#name-introduction" class="section-name selfRef">Introduction</a>
       </h2>
-<p id="section-1-1">OAuth 2.0 <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> redirect-based authorization flows carry protocol parameters in URLs. The critical parameter is the <strong>authorization code</strong>: it is a credential, exchangeable for tokens. When the authorization server redirects back to the OAuth client with <code>?code=...&amp;state=...</code> in the redirect URI, that credential is written into browser history, web server access logs, proxy and load balancer logs, and analytics systems; it leaks through Referer headers to third-party resources loaded by the callback page; and it can be disclosed through URL sharing, screenshots, and copy/paste. The OAuth 2.0 Security Best Current Practice <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> documents these leakage vectors and prescribes mitigations that limit the damage of a leaked code (PKCE <span>[<a href="#RFC7636" class="cite xref">RFC7636</a>]</span>, one-time use, short lifetimes) — but the code is still exposed.<a href="#section-1-1" class="pilcrow">¶</a></p>
+<p id="section-1-1">OAuth 2.0 <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> redirect-based authorization flows carry protocol parameters in URLs. The critical parameter is the <strong>authorization code</strong>: it is a credential, exchangeable for tokens. When the authorization server redirects back to the OAuth client with <code>?code=...&amp;state=...</code> in the redirect URI, that credential is written into browser history, web server access logs, proxy and load balancer logs, and analytics systems; it leaks through Referer headers to third-party resources loaded by the callback page; and it can be disclosed through URL sharing, screenshots, and copy/paste. The OAuth 2.0 Security Best Current Practice <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> documents these leakage vectors and prescribes mitigations that limit the damage of a leaked code (PKCE <span>[<a href="#RFC7636" class="cite xref">RFC7636</a>]</span>, one-time use, short lifetimes), but the code is still exposed.<a href="#section-1-1" class="pilcrow">¶</a></p>
 <p id="section-1-2">A second, related weakness is that the authorization server has no reliable way to know which web origin sent the user. The Referer header may be trimmed, stripped, or rewritten, and everything else in the authorization request is claimed by the requester rather than attested by anyone.<a href="#section-1-2" class="pilcrow">¶</a></p>
 <p id="section-1-3">This document defines browser behavior and a single Structured Field <span>[<a href="#RFC9651" class="cite xref">RFC9651</a>]</span> header field, <code>OAuth-Authorization</code>, used on both legs of the flow:<a href="#section-1-3" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -1374,10 +1374,10 @@ svg {
 <p id="section-1-6">The mechanism provides <strong>security for the authorization request, and security and privacy for the authorization response</strong>:<a href="#section-1-6" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-1-7.1">
-          <p id="section-1-7.1.1">The authorization request parameters remain in the request URI, unchanged, so existing authorization servers continue to work. The header adds origin attestation, tamper evidence, and a capability signal — security, but not privacy: the OAuth client cannot know whether a given user's browser supports this mechanism, so the parameters never leave the URL.<a href="#section-1-7.1.1" class="pilcrow">¶</a></p>
+          <p id="section-1-7.1.1">The authorization request parameters remain in the request URI, unchanged, so existing authorization servers continue to work. The header adds origin attestation, tamper evidence, and a capability signal. This is security without privacy: the OAuth client cannot know whether a given user's browser supports this mechanism, so the parameters never leave the URL.<a href="#section-1-7.1.1" class="pilcrow">¶</a></p>
 </li>
         <li class="normal" id="section-1-7.2">
-          <p id="section-1-7.2.1">The authorization response parameters — above all the authorization code — exist only in the protected header and never appear in any URL. The authorization server sends them this way only after the header's arrival with the authorization request has proven that the browser and OAuth client support it.<a href="#section-1-7.2.1" class="pilcrow">¶</a></p>
+          <p id="section-1-7.2.1">The authorization response parameters, above all the authorization code, exist only in the protected header and never appear in any URL. The authorization server sends them this way only after the header's arrival with the authorization request has proven that the browser and OAuth client support it.<a href="#section-1-7.2.1" class="pilcrow">¶</a></p>
 </li>
       </ul>
 <p id="section-1-8">Existing deployments continue to function unchanged, and adoption is deliberately inexpensive: for most clients, support arrives as an update to the OAuth library they already use, with no new endpoints, no keys, and no change to how authorization parameters are constructed or parsed (<a href="#deployment-considerations" class="auto internal xref">Section 9</a>).<a href="#section-1-8" class="pilcrow">¶</a></p>
@@ -1419,7 +1419,7 @@ svg {
         <h3 id="name-browser-enforcement-precond">
 <a href="#section-1.3" class="section-number selfRef">1.3. </a><a href="#name-browser-enforcement-precond" class="section-name selfRef">Browser Enforcement Precondition</a>
         </h3>
-<p id="section-1.3-1">The security properties defined in this document are provided by browser behavior, not by the header name or value. The header MUST be inaccessible to page JavaScript, to <code>fetch()</code> and <code>XMLHttpRequest</code>, to service workers, and to browser extensions (<a href="#browser-processing" class="auto internal xref">Section 8</a>). <strong>A browser that cannot enforce all of the protections in <a href="#browser-processing" class="auto internal xref">Section 8</a> — for example, because its extension APIs expose all request headers — MUST NOT implement this mechanism.</strong> In that case the flow degrades safely to standard OAuth: no header is generated, and the authorization server responds with parameters in the redirect URI as it does today.<a href="#section-1.3-1" class="pilcrow">¶</a></p>
+<p id="section-1.3-1">The security properties defined in this document are provided by browser behavior, not by the header name or value. The header MUST be inaccessible to page JavaScript, to <code>fetch()</code> and <code>XMLHttpRequest</code>, to service workers, and to browser extensions (<a href="#browser-processing" class="auto internal xref">Section 8</a>). <strong>A browser that cannot enforce all of the protections in <a href="#browser-processing" class="auto internal xref">Section 8</a> (for example, because its extension APIs expose all request headers) MUST NOT implement this mechanism.</strong> In that case the flow degrades safely to standard OAuth: no header is generated, and the authorization server responds with parameters in the redirect URI as it does today.<a href="#section-1.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1431,7 +1431,7 @@ svg {
       </h2>
 <p id="section-2-1">The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14 <span>[<a href="#RFC2119" class="cite xref">RFC2119</a>]</span> <span>[<a href="#RFC8174" class="cite xref">RFC8174</a>]</span> when, and only when, they appear in all capitals, as shown here.<a href="#section-2-1" class="pilcrow">¶</a></p>
 <p id="section-2-2">This document uses the terms "authorization request", "authorization response", "authorization server" (AS), "client", and "redirect URI" as defined by OAuth 2.0 <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>, and "origin" as defined by <span>[<a href="#RFC6454" class="cite xref">RFC6454</a>]</span>.<a href="#section-2-2" class="pilcrow">¶</a></p>
-<p id="section-2-3"><strong>Client</strong>: in this document, "client" always means the OAuth client as defined by <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span> — the application requesting authorization. The HTTP client performing navigations is always referred to as "the browser".<a href="#section-2-3" class="pilcrow">¶</a></p>
+<p id="section-2-3"><strong>Client</strong>: in this document, "client" always means the OAuth client as defined by <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>, the application requesting authorization. The HTTP client performing navigations is always referred to as "the browser".<a href="#section-2-3" class="pilcrow">¶</a></p>
 <p id="section-2-4"><strong>Browser</strong>: a user agent performing top-level navigations on behalf of a user.<a href="#section-2-4" class="pilcrow">¶</a></p>
 <p id="section-2-5"><strong>Redirecting server / redirecting URL</strong>: the server, and the URL, from which a redirect response was received. The browser attests the origin (and optionally a path prefix) of the redirecting URL, which is well defined even when the redirect is the first response in a navigation (e.g., a login URL that immediately returns a redirect).<a href="#section-2-5" class="pilcrow">¶</a></p>
 <p id="section-2-6"><strong>Authorization request and response</strong> always refer to the OAuth messages <span>[<a href="#RFC6749" class="cite xref">RFC6749</a>]</span>, never to HTTP requests and responses. At each redirect hop, the <code>OAuth-Authorization</code> header field appears in two HTTP messages: the redirecting server sets it in the redirect <em>response</em>, and the browser delivers it as a header field of the subsequent HTTP <em>request</em> to the redirect destination. This document always states which HTTP message is meant.<a href="#section-2-6" class="pilcrow">¶</a></p>
@@ -1459,7 +1459,7 @@ svg {
           <strong>(new)</strong> The browser adds the browser-attested <code>origin</code> of the AS and delivers the header, exactly once, as a header field of the HTTP request to the redirect URI.<a href="#section-3-2.6" class="pilcrow">¶</a>
 </li>
         <li id="section-3-2.7">
-          <strong>(new)</strong> The client reads the authorization response parameters from the header's <code>query</code> member — using the same parsing it uses for URL query strings today — and verifies the browser-attested <code>origin</code> is the expected AS.<a href="#section-3-2.7" class="pilcrow">¶</a>
+          <strong>(new)</strong> The client reads the authorization response parameters from the header's <code>query</code> member, using the same parsing it uses for URL query strings today, and verifies the browser-attested <code>origin</code> is the expected AS.<a href="#section-3-2.7" class="pilcrow">¶</a>
 </li>
       </ol>
 <p id="section-3-3">If any party does not support the mechanism, the header is simply absent and the flow proceeds as standard OAuth.<a href="#section-3-3" class="pilcrow">¶</a></p>
@@ -1470,7 +1470,7 @@ svg {
       <h2 id="name-the-oauth-authorization-hea">
 <a href="#section-4" class="section-number selfRef">4. </a><a href="#name-the-oauth-authorization-hea" class="section-name selfRef">The OAuth-Authorization Header Field</a>
       </h2>
-<p id="section-4-1"><code>OAuth-Authorization</code> is a Structured Field Dictionary <span>[<a href="#RFC9651" class="cite xref">RFC9651</a>]</span> with three members — <code>query</code>, <code>origin</code>, and <code>path</code> — all Strings. The redirecting server sets the header in a redirect response; the browser validates and augments it, and delivers it as a header field of the subsequent HTTP request to the redirect destination (<a href="#browser-processing" class="auto internal xref">Section 8</a>).<a href="#section-4-1" class="pilcrow">¶</a></p>
+<p id="section-4-1"><code>OAuth-Authorization</code> is a Structured Field Dictionary <span>[<a href="#RFC9651" class="cite xref">RFC9651</a>]</span> with three members, all Strings: <code>query</code>, <code>origin</code>, and <code>path</code>. The redirecting server sets the header in a redirect response; the browser validates and augments it, and delivers it as a header field of the subsequent HTTP request to the redirect destination (<a href="#browser-processing" class="auto internal xref">Section 8</a>).<a href="#section-4-1" class="pilcrow">¶</a></p>
 <p id="section-4-2">A recipient determines which OAuth message the header carries from its own role: an authorization endpoint receives authorization requests; a redirect URI receives authorization responses. Delivery to the wrong context fails closed (<a href="#security-cross-context" class="auto internal xref">Section 10.3</a>).<a href="#section-4-2" class="pilcrow">¶</a></p>
 <div id="query-member">
 <section id="section-4.1">
@@ -1492,7 +1492,7 @@ svg {
         <h3 id="name-origin">
 <a href="#section-4.2" class="section-number selfRef">4.2. </a><a href="#name-origin" class="section-name selfRef">origin</a>
         </h3>
-<p id="section-4.2-1">Set only by the browser: the ASCII serialization <span>[<a href="#RFC6454" class="cite xref">RFC6454</a>]</span> of the redirecting URL's origin. Servers MUST NOT set <code>origin</code>; the browser removes any server-set value before setting its own. A receiving party can therefore rely on <code>origin</code> unconditionally — it cannot be set, suppressed, or modified by web content or by any server.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
+<p id="section-4.2-1">Set only by the browser: the ASCII serialization <span>[<a href="#RFC6454" class="cite xref">RFC6454</a>]</span> of the redirecting URL's origin. Servers MUST NOT set <code>origin</code>; the browser removes any server-set value before setting its own. A receiving party can therefore rely on <code>origin</code> unconditionally: it cannot be set, suppressed, or modified by web content or by any server.<a href="#section-4.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="path">
@@ -1516,7 +1516,7 @@ svg {
         <h3 id="name-client-behavior">
 <a href="#section-5.1" class="section-number selfRef">5.1. </a><a href="#name-client-behavior" class="section-name selfRef">Client Behavior</a>
         </h3>
-<p id="section-5.1-1">The client constructs the authorization request URI exactly as it does today — all authorization request parameters remain in the URI query for compatibility. In the redirect response (302 or 303) that sends the browser to the authorization server, the client additionally sets the header:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
+<p id="section-5.1-1">The client constructs the authorization request URI exactly as it does today; all authorization request parameters remain in the URI query for compatibility. In the redirect response (302 or 303) that sends the browser to the authorization server, the client additionally sets the header:<a href="#section-5.1-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-5.1-2">
 <pre>HTTP/1.1 303 See Other
 Location: https://as.example/authorize?client_id=abc&amp;response_type=code
@@ -1587,7 +1587,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
 
 </pre><a href="#section-6.1-2" class="pilcrow">¶</a>
 </div>
-<p id="section-6.1-3">The AS delivers error responses through the same header, for consistency: once support is established, every authorization response — success or error — arrives through the same channel, giving the client a single processing path. (Keeping error details out of URLs and logs is a secondary benefit.)<a href="#section-6.1-3" class="pilcrow">¶</a></p>
+<p id="section-6.1-3">The AS delivers error responses through the same header, for consistency: once support is established, every authorization response, success or error, arrives through the same channel, giving the client a single processing path. (Keeping error details out of URLs and logs is a secondary benefit.)<a href="#section-6.1-3" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-6.1-4">
 <pre>HTTP/1.1 303 See Other
 Location: https://app.example/portal/cb
@@ -1598,7 +1598,7 @@ OAuth-Authorization: query="error=access_denied&amp;state=123
 </div>
 <p id="section-6.1-5">The AS MAY include a <code>path</code> claim (<a href="#path-validation" class="auto internal xref">Section 7</a>).<a href="#section-6.1-5" class="pilcrow">¶</a></p>
 <p id="section-6.1-6">An AS MUST NOT include an <code>OAuth-Authorization</code> header in its response redirect unless the corresponding authorization request arrived bearing the header: without that signal there is no evidence the browser will deliver the header or that the client will read it.<a href="#section-6.1-6" class="pilcrow">¶</a></p>
-<p id="section-6.1-7">The browser processes the header per <a href="#browser-processing" class="auto internal xref">Section 8</a> and delivers it — exactly once, to the redirect URI only — with the navigation:<a href="#section-6.1-7" class="pilcrow">¶</a></p>
+<p id="section-6.1-7">The browser processes the header per <a href="#browser-processing" class="auto internal xref">Section 8</a> and delivers it with the navigation, exactly once, to the redirect URI only:<a href="#section-6.1-7" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="section-6.1-8">
 <pre>GET /portal/cb HTTP/1.1
 Host: app.example
@@ -1619,13 +1619,13 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
 <ol start="1" type="1" class="compact type-1" id="section-6.2-2">
 <li id="section-6.2-2.1">MUST obtain the authorization response parameters by parsing the <code>query</code> member as a URL query string, and MUST ignore any query parameters present in the request URI.<a href="#section-6.2-2.1" class="pilcrow">¶</a>
 </li>
-          <li id="section-6.2-2.2">MUST verify that the <code>origin</code> member matches the origin of the authorization server it sent the corresponding authorization request to, and reject the response otherwise. This check is browser-attested and complements — but is stronger than — the <code>iss</code> parameter <span>[<a href="#RFC9207" class="cite xref">RFC9207</a>]</span>, which is asserted by whichever server sent the response.<a href="#section-6.2-2.2" class="pilcrow">¶</a>
+          <li id="section-6.2-2.2">MUST verify that the <code>origin</code> member matches the origin of the authorization server it sent the corresponding authorization request to, and reject the response otherwise. This browser-attested check complements the <code>iss</code> parameter <span>[<a href="#RFC9207" class="cite xref">RFC9207</a>]</span> and is stronger: <code>iss</code> is asserted by whichever server sent the response.<a href="#section-6.2-2.2" class="pilcrow">¶</a>
 </li>
           <li id="section-6.2-2.3">Processes the parameters (including <code>state</code> verification and the token request with PKCE) exactly as it does for URL-delivered responses today.<a href="#section-6.2-2.3" class="pilcrow">¶</a>
 </li>
         </ol>
 <p id="section-6.2-3">A client that receives authorization response parameters in the URL (because the user's browser, or the AS, does not support this mechanism) processes them as it does today. A client can never require the header: URL delivery may simply mean an unsupporting browser (see <a href="#security-downgrade" class="auto internal xref">Section 10.2</a>).<a href="#section-6.2-3" class="pilcrow">¶</a></p>
-<p id="section-6.2-4">Because the header is delivered only once, clients MUST complete processing (or persist what they need) on first delivery; a reload of the redirect URI carries neither the header nor any parameters. Note that this also means an authorization code can no longer be replayed out of browser history — there is nothing in the URL or the history entry to replay.<a href="#section-6.2-4" class="pilcrow">¶</a></p>
+<p id="section-6.2-4">Because the header is delivered only once, clients MUST complete processing (or persist what they need) on first delivery; a reload of the redirect URI carries neither the header nor any parameters. Note that this also means an authorization code can no longer be replayed out of browser history: there is nothing in the URL or the history entry to replay.<a href="#section-6.2-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1656,9 +1656,9 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
       <h2 id="name-browser-processing-model">
 <a href="#section-8" class="section-number selfRef">8. </a><a href="#name-browser-processing-model" class="section-name selfRef">Browser Processing Model</a>
       </h2>
-<p id="section-8-1">This is fundamentally a browser behavior specification: the security properties of the <code>OAuth-Authorization</code> header field are created entirely by the browser processing rules in this section. The browser acts as a trusted protocol participant — a role it already plays for every OAuth flow today by enforcing TLS, cookie isolation, redirect handling, and origin boundaries. This section makes that role explicit.<a href="#section-8-1" class="pilcrow">¶</a></p>
+<p id="section-8-1">This is fundamentally a browser behavior specification: the security properties of the <code>OAuth-Authorization</code> header field are created entirely by the browser processing rules in this section. The browser acts as a trusted protocol participant, a role it already plays for every OAuth flow today by enforcing TLS, cookie isolation, redirect handling, and origin boundaries. This section makes that role explicit.<a href="#section-8-1" class="pilcrow">¶</a></p>
 <p id="section-8-2"><strong>Recognition.</strong> The browser processes the header when, and only when, it appears in a 302 or 303 response to a top-level navigation. No URL heuristics are used. The header is ignored (and stripped) in all other contexts: subresource requests, fetch/XHR responses, embedded frames, and non-redirect responses.<a href="#section-8-2" class="pilcrow">¶</a></p>
-<p id="section-8-3"><strong>Identical processing on both legs.</strong> The browser applies the same rules whether the redirecting server is a client sending an authorization request or an AS returning an authorization response. The browser does not parse or interpret the <code>query</code> member — in particular, it does not compare it with the <code>Location</code> URI (<a href="#rationale-mismatch" class="auto internal xref">Appendix B.8</a>).<a href="#section-8-3" class="pilcrow">¶</a></p>
+<p id="section-8-3"><strong>Identical processing on both legs.</strong> The browser applies the same rules whether the redirecting server is a client sending an authorization request or an AS returning an authorization response. The browser does not parse or interpret the <code>query</code> member; in particular, it does not compare it with the <code>Location</code> URI (<a href="#rationale-mismatch" class="auto internal xref">Appendix B.8</a>).<a href="#section-8-3" class="pilcrow">¶</a></p>
 <p id="section-8-4"><strong>Single hop, stateless.</strong> The header is relayed exactly one hop: from the redirect response in which the redirecting server set it, to the HTTP request for the <code>Location</code> URI, and no further. The browser keeps no state about an OAuth flow across hops; if an intermediate destination redirects again, that response must itself set the header for the browser to relay it. Any transient state used to relay the header is destroyed after delivery.<a href="#section-8-4" class="pilcrow">¶</a></p>
 <p id="section-8-5"><strong>Browser-generated members.</strong> The browser removes any <code>origin</code> member set by a server and sets it itself; the browser validates any server-claimed <code>path</code> member and delivers it only if valid. Receiving parties can therefore rely on <code>origin</code> and <code>path</code> unconditionally.<a href="#section-8-5" class="pilcrow">¶</a></p>
 <p id="section-8-6"><strong>Protection requirements.</strong> The browser MUST ensure that:<a href="#section-8-6" class="pilcrow">¶</a></p>
@@ -1675,7 +1675,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
 </li>
       </ul>
 <p id="section-8-8">These protections are intentionally stronger than those of <code>Sec-</code>-prefixed header fields, which today remain readable by extensions and service workers. A browser that cannot enforce every requirement in this list MUST NOT implement this mechanism (see <a href="#security-precondition" class="auto internal xref">Section 10.1</a>).<a href="#section-8-8" class="pilcrow">¶</a></p>
-<p id="section-8-9"><strong>Standards coordination.</strong> The processing model in this section — the forbidden header name, service worker opacity, and navigation integration — requires a normative change to the WHATWG Fetch standard <span>[<a href="#FETCH" class="cite xref">FETCH</a>]</span>. A Fetch pull request defining this processing model is a deliverable of this work; this document defines the OAuth protocol semantics that rely on it.<a href="#section-8-9" class="pilcrow">¶</a></p>
+<p id="section-8-9"><strong>Standards coordination.</strong> The processing model in this section (the forbidden header name, service worker opacity, and navigation integration) requires a normative change to the WHATWG Fetch standard <span>[<a href="#FETCH" class="cite xref">FETCH</a>]</span>. A Fetch pull request defining this processing model is a deliverable of this work; this document defines the OAuth protocol semantics that rely on it.<a href="#section-8-9" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="deployment-considerations">
@@ -1697,7 +1697,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
             <strong>Browsers</strong> implement the processing model in <a href="#browser-processing" class="auto internal xref">Section 8</a>.<a href="#section-9.1-2.2" class="pilcrow">¶</a>
 </li>
           <li class="compact" id="section-9.1-2.3">
-            <strong>Authorization servers</strong> verify and use the header when it arrives with an authorization request, and switch the authorization response to the header — its arrival proves the whole path supports it.<a href="#section-9.1-2.3" class="pilcrow">¶</a>
+            <strong>Authorization servers</strong> verify and use the header when it arrives with an authorization request, and switch the authorization response to the header, whose arrival proves the whole path supports it.<a href="#section-9.1-2.3" class="pilcrow">¶</a>
 </li>
         </ul>
 <p id="section-9.1-3">Until all three parties support the mechanism, every flow proceeds exactly as standard OAuth. There is no flag day and no breakage for any non-supporting party.<a href="#section-9.1-3" class="pilcrow">¶</a></p>
@@ -1708,7 +1708,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-dual-transmission-of-reques">
 <a href="#section-9.2" class="section-number selfRef">9.2. </a><a href="#name-dual-transmission-of-reques" class="section-name selfRef">Dual Transmission of Request Parameters</a>
         </h3>
-<p id="section-9.2-1">Clients send the authorization request parameters in both the URL and the header on every request, indefinitely: a client cannot know whether any given user's browser supports this mechanism, and this specification deliberately defines no discovery mechanism. This is why the authorization request gains security but not privacy (<a href="#privacy-request" class="auto internal xref">Section 11.1</a>) — and why the authorization response, which is sent in the header only when support is proven, gains both.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
+<p id="section-9.2-1">Clients send the authorization request parameters in both the URL and the header on every request, indefinitely: a client cannot know whether any given user's browser supports this mechanism, and this specification deliberately defines no discovery mechanism. This is why the authorization request gains security but not privacy (<a href="#privacy-request" class="auto internal xref">Section 11.1</a>), and why the authorization response, which is sent in the header only when support is proven, gains both.<a href="#section-9.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="single-page-applications">
@@ -1724,7 +1724,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-header-sizes">
 <a href="#section-9.4" class="section-number selfRef">9.4. </a><a href="#name-header-sizes" class="section-name selfRef">Header Sizes</a>
         </h3>
-<p id="section-9.4-1">Authorization code responses are small (typically well under 1 KB). Deployments that layer large response payloads into the <code>query</code> member — such as JARM <span>[<a href="#JARM" class="cite xref">JARM</a>]</span> response JWTs — should be aware of intermediary header size limits, commonly 8–16 KB.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
+<p id="section-9.4-1">Authorization code responses are small (typically well under 1 KB). Deployments that layer large response payloads into the <code>query</code> member, such as JARM <span>[<a href="#JARM" class="cite xref">JARM</a>]</span> response JWTs, should be aware of intermediary header size limits, commonly 8 to 16 KB.<a href="#section-9.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1748,7 +1748,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-downgrade">
 <a href="#section-10.2" class="section-number selfRef">10.2. </a><a href="#name-downgrade" class="section-name selfRef">Downgrade</a>
         </h3>
-<p id="section-10.2-1">An attacker who prevents the mechanism from operating (for example, by interfering with a non-protected portion of the flow) obtains at most today's OAuth: parameters in URLs, with all <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> mitigations — PKCE, <code>state</code>, one-time short-lived codes, exact redirect URI matching — still in force. A client cannot distinguish "the user's browser does not support this" from "support was stripped", and therefore can never hard-require the header; this residual downgrade is accepted and is exactly the status quo. The browser is stateless across the flow (<a href="#browser-processing" class="auto internal xref">Section 8</a>), so it cannot mark a callback as "should have been protected"; a future extension could revisit this if browsers ever maintain per-flow state.<a href="#section-10.2-1" class="pilcrow">¶</a></p>
+<p id="section-10.2-1">An attacker who prevents the mechanism from operating (for example, by interfering with a non-protected portion of the flow) obtains at most today's OAuth: parameters in URLs, with all <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> mitigations (PKCE, <code>state</code>, one-time short-lived codes, exact redirect URI matching) still in force. A client cannot distinguish "the user's browser does not support this" from "support was stripped", and therefore can never hard-require the header; this residual downgrade is accepted and is exactly the status quo. The browser is stateless across the flow (<a href="#browser-processing" class="auto internal xref">Section 8</a>), so it cannot mark a callback as "should have been protected"; a future extension could revisit this if browsers ever maintain per-flow state.<a href="#section-10.2-1" class="pilcrow">¶</a></p>
 <p id="section-10.2-2">Query tampering, by contrast, is not a downgrade vector: the browser always delivers the header with the authorization request, and the AS rejects on mismatch (<a href="#as-behavior-request" class="auto internal xref">Section 5.2</a>).<a href="#section-10.2-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1761,7 +1761,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
 <ul class="compact">
 <li class="compact" id="section-10.3-2.1">An authorization endpoint that receives a header whose <code>query</code> member is not byte-identical to the request URI query rejects the request (<a href="#as-behavior-request" class="auto internal xref">Section 5.2</a>); a header carrying authorization response parameters never matches an authorization request URI.<a href="#section-10.3-2.1" class="pilcrow">¶</a>
 </li>
-          <li class="compact" id="section-10.3-2.2">A client that receives a header at its redirect URI verifies the browser-attested <code>origin</code> is its expected AS (<a href="#authorization-response" class="auto internal xref">Section 6</a>). A header minted by any other party — including an attacker's site issuing a redirect to the client's redirect URI — carries the attacker's origin and is rejected. Web content and extensions cannot forge the header at all (<a href="#browser-processing" class="auto internal xref">Section 8</a>).<a href="#section-10.3-2.2" class="pilcrow">¶</a>
+          <li class="compact" id="section-10.3-2.2">A client that receives a header at its redirect URI verifies the browser-attested <code>origin</code> is its expected AS (<a href="#authorization-response" class="auto internal xref">Section 6</a>). A header minted by any other party, including an attacker's site issuing a redirect to the client's redirect URI, carries the attacker's origin and is rejected. Web content and extensions cannot forge the header at all (<a href="#browser-processing" class="auto internal xref">Section 8</a>).<a href="#section-10.3-2.2" class="pilcrow">¶</a>
 </li>
         </ul>
 </section>
@@ -1771,7 +1771,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-what-is-and-is-not-protecte">
 <a href="#section-10.4" class="section-number selfRef">10.4. </a><a href="#name-what-is-and-is-not-protecte" class="section-name selfRef">What Is and Is Not Protected</a>
         </h3>
-<p id="section-10.4-1">Protected: the authorization code — and the other authorization response parameters — never appear in URLs, eliminating exposure via browser history, web server and proxy logs, Referer headers, analytics and crash reporting, URL sharing, screenshots, and copy/paste; and both parties receive a browser-attested origin for the other side of each redirect.<a href="#section-10.4-1" class="pilcrow">¶</a></p>
+<p id="section-10.4-1">Protected: the authorization code, and the other authorization response parameters, never appear in URLs, eliminating exposure via browser history, web server and proxy logs, Referer headers, analytics and crash reporting, URL sharing, screenshots, and copy/paste; and both parties receive a browser-attested origin for the other side of each redirect.<a href="#section-10.4-1" class="pilcrow">¶</a></p>
 <p id="section-10.4-2">Not protected: parameters in transit (TLS remains REQUIRED for every HTTP request and response carrying the header); the authorization request parameters, which remain in the URL by design; the parties themselves (a malicious AS or client is out of scope); and injection of an attacker's <em>legitimate</em> authorization response at a client (authorization code injection), for which PKCE remains REQUIRED.<a href="#section-10.4-2" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -1789,7 +1789,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-relationship-to-existing-me">
 <a href="#section-10.6" class="section-number selfRef">10.6. </a><a href="#name-relationship-to-existing-me" class="section-name selfRef">Relationship to Existing Mechanisms</a>
         </h3>
-<p id="section-10.6-1">This mechanism supplements and does not relax any existing requirement: redirect URI registration and exact matching, <code>state</code> (or equivalent CSRF protection), PKCE <span>[<a href="#RFC7636" class="cite xref">RFC7636</a>]</span>, and the mitigations of <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> all continue to apply. The <code>origin</code> member provides a browser-attested complement to <code>iss</code> <span>[<a href="#RFC9207" class="cite xref">RFC9207</a>]</span> for mix-up defense, and browser-attested client origin strengthens the AS's ability to detect requests initiated from unexpected origins — supplementing, not replacing, redirect URI validation.<a href="#section-10.6-1" class="pilcrow">¶</a></p>
+<p id="section-10.6-1">This mechanism supplements and does not relax any existing requirement: redirect URI registration and exact matching, <code>state</code> (or equivalent CSRF protection), PKCE <span>[<a href="#RFC7636" class="cite xref">RFC7636</a>]</span>, and the mitigations of <span>[<a href="#RFC9700" class="cite xref">RFC9700</a>]</span> all continue to apply. The <code>origin</code> member provides a browser-attested complement to <code>iss</code> <span>[<a href="#RFC9207" class="cite xref">RFC9207</a>]</span> for mix-up defense, and browser-attested client origin strengthens the AS's ability to detect requests initiated from unexpected origins, supplementing rather than replacing redirect URI validation.<a href="#section-10.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -1820,7 +1820,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-no-new-cross-site-informati">
 <a href="#section-11.3" class="section-number selfRef">11.3. </a><a href="#name-no-new-cross-site-informati" class="section-name selfRef">No New Cross-Site Information Flow</a>
         </h3>
-<p id="section-11.3-1">This mechanism activates only on OAuth authorization navigations — flows that by design already convey the client's identity to the AS (<code>client_id</code>, <code>redirect_uri</code>) in the URL. The browser-attested <code>origin</code> gives the AS nothing it does not already receive; it makes an existing claim reliable rather than adding a new one. On the return leg, the AS origin delivered to the client identifies a party the client chose and already knows. The header is invisible to all third parties, so it cannot be used as a side channel between origins. What remains true — and is unchanged by this specification — is that front-channel OAuth inherently reveals to the AS that a user is authorizing a given client; only back-channel protocols such as <span>[<a href="#I-D.hardt-oauth-aauth-protocol" class="cite xref">I-D.hardt-oauth-aauth-protocol</a>]</span> change that.<a href="#section-11.3-1" class="pilcrow">¶</a></p>
+<p id="section-11.3-1">This mechanism activates only on OAuth authorization navigations: flows that by design already convey the client's identity to the AS (<code>client_id</code>, <code>redirect_uri</code>) in the URL. The browser-attested <code>origin</code> gives the AS nothing it does not already receive; it makes an existing claim reliable rather than adding a new one. On the return leg, the AS origin delivered to the client identifies a party the client chose and already knows. The header is invisible to all third parties, so it cannot be used as a side channel between origins. What remains true, and is unchanged by this specification, is that front-channel OAuth inherently reveals to the AS that a user is authorizing a given client; only back-channel protocols such as <span>[<a href="#I-D.hardt-oauth-aauth-protocol" class="cite xref">I-D.hardt-oauth-aauth-protocol</a>]</span> change that.<a href="#section-11.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="origin-and-path-disclosure">
@@ -1828,7 +1828,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-origin-and-path-disclosure">
 <a href="#section-11.4" class="section-number selfRef">11.4. </a><a href="#name-origin-and-path-disclosure" class="section-name selfRef">Origin and Path Disclosure</a>
         </h3>
-<p id="section-11.4-1">The <code>origin</code> member is a reliable equivalent of a scheme-plus-host Referer, and a validated <code>path</code> member discloses a path prefix — but only to the party the redirect was addressed to, which in OAuth already knows the counterparty. Unlike Referer, these members cannot be stripped by the user without the flow degrading to URL parameters (which disclose strictly more). This trade-off — reliable counterparty verification over origin hiding — is appropriate only where mutual knowledge of the parties is expected, as it is in OAuth; it is one of the reasons this mechanism is OAuth-specific rather than generic (<a href="#rationale-oauth-specific" class="auto internal xref">Appendix B.1</a>).<a href="#section-11.4-1" class="pilcrow">¶</a></p>
+<p id="section-11.4-1">The <code>origin</code> member is a reliable equivalent of a scheme-plus-host Referer, and a validated <code>path</code> member discloses a path prefix, but only to the party the redirect was addressed to, which in OAuth already knows the counterparty. Unlike Referer, these members cannot be stripped by the user without the flow degrading to URL parameters (which disclose strictly more). This trade-off, favoring reliable counterparty verification over origin hiding, is appropriate only where mutual knowledge of the parties is expected, as it is in OAuth; it is one of the reasons this mechanism is OAuth-specific rather than generic (<a href="#rationale-oauth-specific" class="auto internal xref">Appendix B.1</a>).<a href="#section-11.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="user-transparency">
@@ -1989,7 +1989,7 @@ Location: https://app.example/portal/cb?code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-with-this-mechanism">
 <a href="#appendix-A.2" class="section-number selfRef">A.2. </a><a href="#name-with-this-mechanism" class="section-name selfRef">With This Mechanism</a>
         </h3>
-<p id="appendix-A.2-1">Client redirects to the AS — the URL is identical to today, plus the header:<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-1">Client redirects to the AS; the URL is identical to today, plus the header:<a href="#appendix-A.2-1" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="appendix-A.2-2">
 <pre>HTTP/1.1 303 See Other
 Location: https://as.example/authorize?client_id=abc&amp;response_type=code
@@ -2014,7 +2014,7 @@ OAuth-Authorization: query="client_id=abc&amp;response_type=code
 
 </pre><a href="#appendix-A.2-4" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.2-5">The AS verifies the <code>query</code> member matches the URL, verifies <code>https://app.example</code> is consistent with the registered redirect URI for <code>client_id=abc</code>, and — knowing the browser and client support protected authorization responses — returns the response in the header with a clean redirect URI:<a href="#appendix-A.2-5" class="pilcrow">¶</a></p>
+<p id="appendix-A.2-5">The AS verifies the <code>query</code> member matches the URL, verifies <code>https://app.example</code> is consistent with the registered redirect URI for <code>client_id=abc</code>, and, knowing the browser and client support protected authorization responses, returns the response in the header with a clean redirect URI:<a href="#appendix-A.2-5" class="pilcrow">¶</a></p>
 <div class="alignLeft art-text artwork" id="appendix-A.2-6">
 <pre>HTTP/1.1 303 See Other
 Location: https://app.example/portal/cb
@@ -2056,7 +2056,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-why-a-single-header-field">
 <a href="#appendix-B.2" class="section-number selfRef">B.2. </a><a href="#name-why-a-single-header-field" class="section-name selfRef">Why a Single Header Field</a>
         </h3>
-<p id="appendix-B.2-1">The browser's processing is identical on both legs of the flow, so one header field name means one processing rule, one forbidden header name in Fetch, and one IANA registration. Separate "request" and "response" names would also invite conflating the OAuth message direction with the HTTP message direction — the header appears in an HTTP response and then an HTTP request on <em>each</em> leg. The receiving endpoint's role already determines which OAuth message the header carries, and delivery to the wrong context fails closed (<a href="#security-cross-context" class="auto internal xref">Section 10.3</a>).<a href="#appendix-B.2-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.2-1">The browser's processing is identical on both legs of the flow, so one header field name means one processing rule, one forbidden header name in Fetch, and one IANA registration. Separate "request" and "response" names would also invite conflating the OAuth message direction with the HTTP message direction: the header appears in an HTTP response and then an HTTP request on <em>each</em> leg. The receiving endpoint's role already determines which OAuth message the header carries, and delivery to the wrong context fails closed (<a href="#security-cross-context" class="auto internal xref">Section 10.3</a>).<a href="#appendix-B.2-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="why-not-cryptographic-protection-of-parameters">
@@ -2064,7 +2064,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-why-not-cryptographic-prote">
 <a href="#appendix-B.3" class="section-number selfRef">B.3. </a><a href="#name-why-not-cryptographic-prote" class="section-name selfRef">Why Not Cryptographic Protection of Parameters</a>
         </h3>
-<p id="appendix-B.3-1">The exposure this document addresses is at the endpoints, not on the channel: TLS already protects parameters in transit. An encrypted or signed response (JARM <span>[<a href="#JARM" class="cite xref">JARM</a>]</span>) placed in a URL is still a URL — still written to history, still in access logs, still sent in Referer headers, still shareable. Cryptographic protection also requires key distribution between every client and AS pair, and no cryptographic scheme can attest a client's <em>web origin</em> — only the user agent knows which origin actually initiated a navigation. The mechanisms compose: a JARM response can be carried in the header's <code>query</code> member, gaining URL-freedom on top of its integrity properties.<a href="#appendix-B.3-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.3-1">The exposure this document addresses is at the endpoints, not on the channel: TLS already protects parameters in transit. An encrypted or signed response (JARM <span>[<a href="#JARM" class="cite xref">JARM</a>]</span>) placed in a URL is still a URL: still written to history, still in access logs, still sent in Referer headers, still shareable. Cryptographic protection also requires key distribution between every client and AS pair, and no cryptographic scheme can attest a client's <em>web origin</em>: only the user agent knows which origin actually initiated a navigation. The mechanisms compose: a JARM response can be carried in the header's <code>query</code> member, gaining URL-freedom on top of its integrity properties.<a href="#appendix-B.3-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="rationale-back-channel">
@@ -2080,7 +2080,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-why-the-authorization-reque">
 <a href="#appendix-B.5" class="section-number selfRef">B.5. </a><a href="#name-why-the-authorization-reque" class="section-name selfRef">Why the Authorization Request Parameters Stay in the URL</a>
         </h3>
-<p id="appendix-B.5-1">Compatibility, permanently. The authorization request URI is processed by every existing AS with no changes, and the client can never know whether the user's browser supports this mechanism, so it always sends both (<a href="#deployment-considerations" class="auto internal xref">Section 9</a>). The <code>query</code> member on this leg is not for confidentiality — authorization request parameters are not secrets — but provides a canonical copy bound to browser-attested origin metadata, a tamper check (<a href="#as-behavior-request" class="auto internal xref">Section 5.2</a>), and the capability signal that unlocks the protected authorization response.<a href="#appendix-B.5-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.5-1">Compatibility, permanently. The authorization request URI is processed by every existing AS with no changes, and the client can never know whether the user's browser supports this mechanism, so it always sends both (<a href="#deployment-considerations" class="auto internal xref">Section 9</a>). The <code>query</code> member on this leg is not for confidentiality (authorization request parameters are not secrets) but provides a canonical copy bound to browser-attested origin metadata, a tamper check (<a href="#as-behavior-request" class="auto internal xref">Section 5.2</a>), and the capability signal that unlocks the protected authorization response.<a href="#appendix-B.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="why-a-structured-field-dictionary-wrapping-a-query-string">
@@ -2088,7 +2088,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-why-a-structured-field-dict">
 <a href="#appendix-B.6" class="section-number selfRef">B.6. </a><a href="#name-why-a-structured-field-dict" class="section-name selfRef">Why a Structured Field Dictionary Wrapping a Query String</a>
         </h3>
-<p id="appendix-B.6-1">The outer Structured Field <span>[<a href="#RFC9651" class="cite xref">RFC9651</a>]</span> layer gives the browser a well-defined, extensible place for the members it owns (<code>origin</code>, <code>path</code>) without colliding with the OAuth parameter namespace. The OAuth parameters themselves stay query-string encoded inside the <code>query</code> member, so every implementation parses them with the same code path it uses for URLs today — no new parameter encoding, and no dual-parser inconsistency bugs.<a href="#appendix-B.6-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.6-1">The outer Structured Field <span>[<a href="#RFC9651" class="cite xref">RFC9651</a>]</span> layer gives the browser a well-defined, extensible place for the members it owns (<code>origin</code>, <code>path</code>) without colliding with the OAuth parameter namespace. The OAuth parameters themselves stay query-string encoded inside the <code>query</code> member, so every implementation parses them with the same code path it uses for URLs today: no new parameter encoding, and no dual-parser inconsistency bugs.<a href="#appendix-B.6-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="why-redirect-responses-only-why-not-form-post">
@@ -2096,7 +2096,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-why-redirect-responses-only">
 <a href="#appendix-B.7" class="section-number selfRef">B.7. </a><a href="#name-why-redirect-responses-only" class="section-name selfRef">Why Redirect Responses Only (Why Not form_post)</a>
         </h3>
-<p id="appendix-B.7-1">This mechanism applies exclusively to redirect responses. The <code>form_post</code> response mode places parameters in the document as form fields, where they are visible to page JavaScript and extensions no matter what the browser does with headers — there is nothing there for the browser to protect. Redirects are also what the overwhelming majority of deployments use, and extending them is a library change rather than an infrastructure change.<a href="#appendix-B.7-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.7-1">This mechanism applies exclusively to redirect responses. The <code>form_post</code> response mode places parameters in the document as form fields, where they are visible to page JavaScript and extensions no matter what the browser does with headers; there is nothing there for the browser to protect. Redirects are also what the overwhelming majority of deployments use, and extending them is a library change rather than an infrastructure change.<a href="#appendix-B.7-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="rationale-mismatch">
@@ -2104,7 +2104,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-why-the-as-rejects-on-query">
 <a href="#appendix-B.8" class="section-number selfRef">B.8. </a><a href="#name-why-the-as-rejects-on-query" class="section-name selfRef">Why the AS Rejects on Query Mismatch, Rather Than the Browser Dropping the Header</a>
         </h3>
-<p id="appendix-B.8-1">If the browser dropped the header when the <code>query</code> member disagreed with the URL, an attacker able to modify the URL query could make the header vanish — silently downgrading the flow to unprotected URL parameters. Instead the browser always delivers the header, and the AS treats a mismatch as an error (<a href="#as-behavior-request" class="auto internal xref">Section 5.2</a>). Tampering becomes a visible failure rather than a silent downgrade.<a href="#appendix-B.8-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.8-1">If the browser dropped the header when the <code>query</code> member disagreed with the URL, an attacker able to modify the URL query could make the header vanish, silently downgrading the flow to unprotected URL parameters. Instead the browser always delivers the header, and the AS treats a mismatch as an error (<a href="#as-behavior-request" class="auto internal xref">Section 5.2</a>). Tampering becomes a visible failure rather than a silent downgrade.<a href="#appendix-B.8-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="why-not-a-sec-prefixed-name">
@@ -2120,7 +2120,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-why-not-a-response_mode-val">
 <a href="#appendix-B.10" class="section-number selfRef">B.10. </a><a href="#name-why-not-a-response_mode-val" class="section-name selfRef">Why Not a response_mode Value</a>
         </h3>
-<p id="appendix-B.10-1">The protected authorization response is functionally a new response mode, but it is negotiated by demonstrated browser capability — the header's arrival with the authorization request — rather than requested by the client. A <code>response_mode</code> parameter would allow a client to request behavior the user's browser may not support, which cannot work. In-band capability signaling is the only reliable negotiation.<a href="#appendix-B.10-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.10-1">The protected authorization response is functionally a new response mode, but it is negotiated by demonstrated browser capability (the header's arrival with the authorization request) rather than requested by the client. A <code>response_mode</code> parameter would allow a client to request behavior the user's browser may not support, which cannot work. In-band capability signaling is the only reliable negotiation.<a href="#appendix-B.10-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="rationale-spa">
@@ -2136,7 +2136,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
         <h3 id="name-why-native-application-flow">
 <a href="#appendix-B.12" class="section-number selfRef">B.12. </a><a href="#name-why-native-application-flow" class="section-name selfRef">Why Native Application Flows Are Out of Scope</a>
         </h3>
-<p id="appendix-B.12-1">The header cannot survive the custom-scheme or app-link handoff from the system browser back to a native app: the operating system delivers a URL, not headers. The threat model also differs — dedicated system authentication sessions do not run page JavaScript or extensions in the same way. Native flows continue to use their existing mechanisms (with PKCE, per <span>[<a href="#RFC8252" class="cite xref">RFC8252</a>]</span>).<a href="#appendix-B.12-1" class="pilcrow">¶</a></p>
+<p id="appendix-B.12-1">The header cannot survive the custom-scheme or app-link handoff from the system browser back to a native app: the operating system delivers a URL, not headers. The threat model also differs: dedicated system authentication sessions do not run page JavaScript or extensions in the same way. Native flows continue to use their existing mechanisms (with PKCE, per <span>[<a href="#RFC8252" class="cite xref">RFC8252</a>]</span>).<a href="#appendix-B.12-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="why-browser-attested-origin-when-iss-exists">
