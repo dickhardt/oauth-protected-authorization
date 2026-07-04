@@ -57,7 +57,7 @@ organization = "Google"
 
 .# Abstract
 
-This document defines browser support for protecting OAuth 2.0 authorization requests and authorization responses during redirect-based authorization flows. A single Structured Field header field, OAuth-Authorization, is set by the OAuth client in the redirect response that sends the browser to the authorization server, and by the authorization server in the redirect response that returns the browser to the OAuth client. In both cases the browser augments the header with the attested origin of the redirecting party and delivers it to the redirect destination. The mechanism provides security for the authorization request — the authorization server receives a browser-attested, tamper-evident statement of which origin initiated the request — and security and privacy for the authorization response: the authorization code is delivered in the browser-protected header instead of the redirect URI, and never appears in a URL, eliminating its exposure through browser history, server logs, Referer headers, analytics systems, and URL sharing. The header is generated, validated, and delivered by the browser, and is inaccessible to scripts, service workers, and browser extensions. Existing OAuth deployments continue to function unchanged; the protections activate only when the OAuth client, browser, and authorization server all support them.
+This document defines browser support for protecting OAuth 2.0 authorization requests and authorization responses during redirect-based authorization flows. A single Structured Field header field, OAuth-Authorization, is set by the OAuth client in the redirect response that sends the browser to the authorization server, and by the authorization server in the redirect response that returns the browser to the OAuth client. In both cases the browser augments the header with the attested origin of the redirecting party and delivers it to the redirect destination. The mechanism provides security for the authorization request: the authorization server receives a browser-attested, tamper-evident statement of which origin initiated the request. The mechanism provides security and privacy for the authorization response: the authorization code is delivered in the browser-protected header instead of the redirect URI, and never appears in a URL, eliminating its exposure through browser history, server logs, Referer headers, analytics systems, and URL sharing. The header is generated, validated, and delivered by the browser, and is inaccessible to scripts, service workers, and browser extensions. Existing OAuth deployments continue to function unchanged; the protections activate only when the OAuth client, browser, and authorization server all support them.
 
 .# Discussion Venues
 
@@ -69,7 +69,7 @@ Source for this draft and an issue tracker can be found at https://github.com/di
 
 # Introduction
 
-OAuth 2.0 [@!RFC6749] redirect-based authorization flows carry protocol parameters in URLs. The critical parameter is the **authorization code**: it is a credential, exchangeable for tokens. When the authorization server redirects back to the OAuth client with `?code=...&state=...` in the redirect URI, that credential is written into browser history, web server access logs, proxy and load balancer logs, and analytics systems; it leaks through Referer headers to third-party resources loaded by the callback page; and it can be disclosed through URL sharing, screenshots, and copy/paste. The OAuth 2.0 Security Best Current Practice [@!RFC9700] documents these leakage vectors and prescribes mitigations that limit the damage of a leaked code (PKCE [@RFC7636], one-time use, short lifetimes) — but the code is still exposed.
+OAuth 2.0 [@!RFC6749] redirect-based authorization flows carry protocol parameters in URLs. The critical parameter is the **authorization code**: it is a credential, exchangeable for tokens. When the authorization server redirects back to the OAuth client with `?code=...&state=...` in the redirect URI, that credential is written into browser history, web server access logs, proxy and load balancer logs, and analytics systems; it leaks through Referer headers to third-party resources loaded by the callback page; and it can be disclosed through URL sharing, screenshots, and copy/paste. The OAuth 2.0 Security Best Current Practice [@!RFC9700] documents these leakage vectors and prescribes mitigations that limit the damage of a leaked code (PKCE [@RFC7636], one-time use, short lifetimes), but the code is still exposed.
 
 A second, related weakness is that the authorization server has no reliable way to know which web origin sent the user. The Referer header may be trimmed, stripped, or rewritten, and everything else in the authorization request is claimed by the requester rather than attested by anyone.
 
@@ -83,9 +83,9 @@ The browser performs the same processing in both cases ((#browser-processing)); 
 
 The mechanism provides **security for the authorization request, and security and privacy for the authorization response**:
 
-- The authorization request parameters remain in the request URI, unchanged, so existing authorization servers continue to work. The header adds origin attestation, tamper evidence, and a capability signal — security, but not privacy: the OAuth client cannot know whether a given user's browser supports this mechanism, so the parameters never leave the URL.
+- The authorization request parameters remain in the request URI, unchanged, so existing authorization servers continue to work. The header adds origin attestation, tamper evidence, and a capability signal. This is security without privacy: the OAuth client cannot know whether a given user's browser supports this mechanism, so the parameters never leave the URL.
 
-- The authorization response parameters — above all the authorization code — exist only in the protected header and never appear in any URL. The authorization server sends them this way only after the header's arrival with the authorization request has proven that the browser and OAuth client support it.
+- The authorization response parameters, above all the authorization code, exist only in the protected header and never appear in any URL. The authorization server sends them this way only after the header's arrival with the authorization request has proven that the browser and OAuth client support it.
 
 Existing deployments continue to function unchanged, and adoption is deliberately inexpensive: for most clients, support arrives as an update to the OAuth library they already use, with no new endpoints, no keys, and no change to how authorization parameters are constructed or parsed ((#deployment-considerations)).
 
@@ -106,7 +106,7 @@ This mechanism complements PKCE [@RFC7636], PAR [@RFC9126], `iss` identification
 
 ## Browser Enforcement Precondition
 
-The security properties defined in this document are provided by browser behavior, not by the header name or value. The header MUST be inaccessible to page JavaScript, to `fetch()` and `XMLHttpRequest`, to service workers, and to browser extensions ((#browser-processing)). **A browser that cannot enforce all of the protections in (#browser-processing) — for example, because its extension APIs expose all request headers — MUST NOT implement this mechanism.** In that case the flow degrades safely to standard OAuth: no header is generated, and the authorization server responds with parameters in the redirect URI as it does today.
+The security properties defined in this document are provided by browser behavior, not by the header name or value. The header MUST be inaccessible to page JavaScript, to `fetch()` and `XMLHttpRequest`, to service workers, and to browser extensions ((#browser-processing)). **A browser that cannot enforce all of the protections in (#browser-processing) (for example, because its extension APIs expose all request headers) MUST NOT implement this mechanism.** In that case the flow degrades safely to standard OAuth: no header is generated, and the authorization server responds with parameters in the redirect URI as it does today.
 
 # Conventions and Terminology
 
@@ -114,7 +114,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 This document uses the terms "authorization request", "authorization response", "authorization server" (AS), "client", and "redirect URI" as defined by OAuth 2.0 [@!RFC6749], and "origin" as defined by [@!RFC6454].
 
-**Client**: in this document, "client" always means the OAuth client as defined by [@!RFC6749] — the application requesting authorization. The HTTP client performing navigations is always referred to as "the browser".
+**Client**: in this document, "client" always means the OAuth client as defined by [@!RFC6749], the application requesting authorization. The HTTP client performing navigations is always referred to as "the browser".
 
 **Browser**: a user agent performing top-level navigations on behalf of a user.
 
@@ -132,13 +132,13 @@ The flow is standard OAuth; the additions introduced by this specification are m
 4. The AS authenticates the user and obtains authorization, using any number of internal redirects or pages; the header plays no role in these intermediate steps.
 5. The AS returns a redirect response to the registered redirect URI. **(new)** Instead of placing the authorization response parameters in the redirect URI query, the AS places them in the `query` member of an `OAuth-Authorization` header. The redirect URI carries no response parameters.
 6. **(new)** The browser adds the browser-attested `origin` of the AS and delivers the header, exactly once, as a header field of the HTTP request to the redirect URI.
-7. **(new)** The client reads the authorization response parameters from the header's `query` member — using the same parsing it uses for URL query strings today — and verifies the browser-attested `origin` is the expected AS.
+7. **(new)** The client reads the authorization response parameters from the header's `query` member, using the same parsing it uses for URL query strings today, and verifies the browser-attested `origin` is the expected AS.
 
 If any party does not support the mechanism, the header is simply absent and the flow proceeds as standard OAuth.
 
 # The OAuth-Authorization Header Field {#header-field}
 
-`OAuth-Authorization` is a Structured Field Dictionary [@!RFC9651] with three members — `query`, `origin`, and `path` — all Strings. The redirecting server sets the header in a redirect response; the browser validates and augments it, and delivers it as a header field of the subsequent HTTP request to the redirect destination ((#browser-processing)).
+`OAuth-Authorization` is a Structured Field Dictionary [@!RFC9651] with three members, all Strings: `query`, `origin`, and `path`. The redirecting server sets the header in a redirect response; the browser validates and augments it, and delivers it as a header field of the subsequent HTTP request to the redirect destination ((#browser-processing)).
 
 A recipient determines which OAuth message the header carries from its own role: an authorization endpoint receives authorization requests; a redirect URI receives authorization responses. Delivery to the wrong context fails closed ((#security-cross-context)).
 
@@ -153,7 +153,7 @@ The `query` member carries the OAuth parameters, using the same serialization as
 
 ## origin
 
-Set only by the browser: the ASCII serialization [@!RFC6454] of the redirecting URL's origin. Servers MUST NOT set `origin`; the browser removes any server-set value before setting its own. A receiving party can therefore rely on `origin` unconditionally — it cannot be set, suppressed, or modified by web content or by any server.
+Set only by the browser: the ASCII serialization [@!RFC6454] of the redirecting URL's origin. Servers MUST NOT set `origin`; the browser removes any server-set value before setting its own. A receiving party can therefore rely on `origin` unconditionally: it cannot be set, suppressed, or modified by web content or by any server.
 
 ## path
 
@@ -165,7 +165,7 @@ The redirecting server MAY include a `path` member as a claim about the path pre
 
 ## Client Behavior
 
-The client constructs the authorization request URI exactly as it does today — all authorization request parameters remain in the URI query for compatibility. In the redirect response (302 or 303) that sends the browser to the authorization server, the client additionally sets the header:
+The client constructs the authorization request URI exactly as it does today; all authorization request parameters remain in the URI query for compatibility. In the redirect response (302 or 303) that sends the browser to the authorization server, the client additionally sets the header:
 
 ```
 HTTP/1.1 303 See Other
@@ -222,7 +222,7 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
     &state=123&iss=https%3A%2F%2Fas.example"
 ```
 
-The AS delivers error responses through the same header, for consistency: once support is established, every authorization response — success or error — arrives through the same channel, giving the client a single processing path. (Keeping error details out of URLs and logs is a secondary benefit.)
+The AS delivers error responses through the same header, for consistency: once support is established, every authorization response, success or error, arrives through the same channel, giving the client a single processing path. (Keeping error details out of URLs and logs is a secondary benefit.)
 
 ```
 HTTP/1.1 303 See Other
@@ -235,7 +235,7 @@ The AS MAY include a `path` claim ((#path-validation)).
 
 An AS MUST NOT include an `OAuth-Authorization` header in its response redirect unless the corresponding authorization request arrived bearing the header: without that signal there is no evidence the browser will deliver the header or that the client will read it.
 
-The browser processes the header per (#browser-processing) and delivers it — exactly once, to the redirect URI only — with the navigation:
+The browser processes the header per (#browser-processing) and delivers it with the navigation, exactly once, to the redirect URI only:
 
 ```
 GET /portal/cb HTTP/1.1
@@ -250,12 +250,12 @@ OAuth-Authorization: query="code=SplxlOBeZQQYbYS6WxSbIA
 A client that receives an `OAuth-Authorization` header at its redirect URI:
 
 1. MUST obtain the authorization response parameters by parsing the `query` member as a URL query string, and MUST ignore any query parameters present in the request URI.
-2. MUST verify that the `origin` member matches the origin of the authorization server it sent the corresponding authorization request to, and reject the response otherwise. This check is browser-attested and complements — but is stronger than — the `iss` parameter [@RFC9207], which is asserted by whichever server sent the response.
+2. MUST verify that the `origin` member matches the origin of the authorization server it sent the corresponding authorization request to, and reject the response otherwise. This browser-attested check complements the `iss` parameter [@RFC9207] and is stronger: `iss` is asserted by whichever server sent the response.
 3. Processes the parameters (including `state` verification and the token request with PKCE) exactly as it does for URL-delivered responses today.
 
 A client that receives authorization response parameters in the URL (because the user's browser, or the AS, does not support this mechanism) processes them as it does today. A client can never require the header: URL delivery may simply mean an unsupporting browser (see (#security-downgrade)).
 
-Because the header is delivered only once, clients MUST complete processing (or persist what they need) on first delivery; a reload of the redirect URI carries neither the header nor any parameters. Note that this also means an authorization code can no longer be replayed out of browser history — there is nothing in the URL or the history entry to replay.
+Because the header is delivered only once, clients MUST complete processing (or persist what they need) on first delivery; a reload of the redirect URI carries neither the header nor any parameters. Note that this also means an authorization code can no longer be replayed out of browser history: there is nothing in the URL or the history entry to replay.
 
 # Path Validation {#path-validation}
 
@@ -274,11 +274,11 @@ The redirecting server cannot lie about its path: the browser only delivers a pa
 
 # Browser Processing Model {#browser-processing}
 
-This is fundamentally a browser behavior specification: the security properties of the `OAuth-Authorization` header field are created entirely by the browser processing rules in this section. The browser acts as a trusted protocol participant — a role it already plays for every OAuth flow today by enforcing TLS, cookie isolation, redirect handling, and origin boundaries. This section makes that role explicit.
+This is fundamentally a browser behavior specification: the security properties of the `OAuth-Authorization` header field are created entirely by the browser processing rules in this section. The browser acts as a trusted protocol participant, a role it already plays for every OAuth flow today by enforcing TLS, cookie isolation, redirect handling, and origin boundaries. This section makes that role explicit.
 
 **Recognition.** The browser processes the header when, and only when, it appears in a 302 or 303 response to a top-level navigation. No URL heuristics are used. The header is ignored (and stripped) in all other contexts: subresource requests, fetch/XHR responses, embedded frames, and non-redirect responses.
 
-**Identical processing on both legs.** The browser applies the same rules whether the redirecting server is a client sending an authorization request or an AS returning an authorization response. The browser does not parse or interpret the `query` member — in particular, it does not compare it with the `Location` URI ((#rationale-mismatch)).
+**Identical processing on both legs.** The browser applies the same rules whether the redirecting server is a client sending an authorization request or an AS returning an authorization response. The browser does not parse or interpret the `query` member; in particular, it does not compare it with the `Location` URI ((#rationale-mismatch)).
 
 **Single hop, stateless.** The header is relayed exactly one hop: from the redirect response in which the redirecting server set it, to the HTTP request for the `Location` URI, and no further. The browser keeps no state about an OAuth flow across hops; if an intermediate destination redirects again, that response must itself set the header for the browser to relay it. Any transient state used to relay the header is destroyed after delivery.
 
@@ -294,7 +294,7 @@ This is fundamentally a browser behavior specification: the security properties 
 
 These protections are intentionally stronger than those of `Sec-`-prefixed header fields, which today remain readable by extensions and service workers. A browser that cannot enforce every requirement in this list MUST NOT implement this mechanism (see (#security-precondition)).
 
-**Standards coordination.** The processing model in this section — the forbidden header name, service worker opacity, and navigation integration — requires a normative change to the WHATWG Fetch standard [@FETCH]. A Fetch pull request defining this processing model is a deliverable of this work; this document defines the OAuth protocol semantics that rely on it.
+**Standards coordination.** The processing model in this section (the forbidden header name, service worker opacity, and navigation integration) requires a normative change to the WHATWG Fetch standard [@FETCH]. A Fetch pull request defining this processing model is a deliverable of this work; this document defines the OAuth protocol semantics that rely on it.
 
 # Deployment Considerations
 
@@ -304,13 +304,13 @@ No coordination between parties is required. Each party adds support independent
 
 - **Clients** add the `OAuth-Authorization` header to the redirect responses they already send, keeping all parameters in the URL, and read authorization responses from the header when present, falling back to URL parameters when it is not. This is a library update.
 - **Browsers** implement the processing model in (#browser-processing).
-- **Authorization servers** verify and use the header when it arrives with an authorization request, and switch the authorization response to the header — its arrival proves the whole path supports it.
+- **Authorization servers** verify and use the header when it arrives with an authorization request, and switch the authorization response to the header, whose arrival proves the whole path supports it.
 
 Until all three parties support the mechanism, every flow proceeds exactly as standard OAuth. There is no flag day and no breakage for any non-supporting party.
 
 ## Dual Transmission of Request Parameters
 
-Clients send the authorization request parameters in both the URL and the header on every request, indefinitely: a client cannot know whether any given user's browser supports this mechanism, and this specification deliberately defines no discovery mechanism. This is why the authorization request gains security but not privacy ((#privacy-request)) — and why the authorization response, which is sent in the header only when support is proven, gains both.
+Clients send the authorization request parameters in both the URL and the header on every request, indefinitely: a client cannot know whether any given user's browser supports this mechanism, and this specification deliberately defines no discovery mechanism. This is why the authorization request gains security but not privacy ((#privacy-request)), and why the authorization response, which is sent in the header only when support is proven, gains both.
 
 ## Single-Page Applications
 
@@ -318,7 +318,7 @@ The authorization response is delivered to the server at the redirect URI; it is
 
 ## Header Sizes
 
-Authorization code responses are small (typically well under 1 KB). Deployments that layer large response payloads into the `query` member — such as JARM [@JARM] response JWTs — should be aware of intermediary header size limits, commonly 8–16 KB.
+Authorization code responses are small (typically well under 1 KB). Deployments that layer large response payloads into the `query` member, such as JARM [@JARM] response JWTs, should be aware of intermediary header size limits, commonly 8 to 16 KB.
 
 # Security Considerations
 
@@ -330,7 +330,7 @@ This specification assumes an honest, conforming browser. It cannot protect agai
 
 ## Downgrade {#security-downgrade}
 
-An attacker who prevents the mechanism from operating (for example, by interfering with a non-protected portion of the flow) obtains at most today's OAuth: parameters in URLs, with all [@!RFC9700] mitigations — PKCE, `state`, one-time short-lived codes, exact redirect URI matching — still in force. A client cannot distinguish "the user's browser does not support this" from "support was stripped", and therefore can never hard-require the header; this residual downgrade is accepted and is exactly the status quo. The browser is stateless across the flow ((#browser-processing)), so it cannot mark a callback as "should have been protected"; a future extension could revisit this if browsers ever maintain per-flow state.
+An attacker who prevents the mechanism from operating (for example, by interfering with a non-protected portion of the flow) obtains at most today's OAuth: parameters in URLs, with all [@!RFC9700] mitigations (PKCE, `state`, one-time short-lived codes, exact redirect URI matching) still in force. A client cannot distinguish "the user's browser does not support this" from "support was stripped", and therefore can never hard-require the header; this residual downgrade is accepted and is exactly the status quo. The browser is stateless across the flow ((#browser-processing)), so it cannot mark a callback as "should have been protected"; a future extension could revisit this if browsers ever maintain per-flow state.
 
 Query tampering, by contrast, is not a downgrade vector: the browser always delivers the header with the authorization request, and the AS rejects on mismatch ((#as-behavior-request)).
 
@@ -339,11 +339,11 @@ Query tampering, by contrast, is not a downgrade vector: the browser always deli
 A single header field name means a header could in principle reach a party expecting the other OAuth message. Both directions fail closed:
 
 - An authorization endpoint that receives a header whose `query` member is not byte-identical to the request URI query rejects the request ((#as-behavior-request)); a header carrying authorization response parameters never matches an authorization request URI.
-- A client that receives a header at its redirect URI verifies the browser-attested `origin` is its expected AS ((#authorization-response)). A header minted by any other party — including an attacker's site issuing a redirect to the client's redirect URI — carries the attacker's origin and is rejected. Web content and extensions cannot forge the header at all ((#browser-processing)).
+- A client that receives a header at its redirect URI verifies the browser-attested `origin` is its expected AS ((#authorization-response)). A header minted by any other party, including an attacker's site issuing a redirect to the client's redirect URI, carries the attacker's origin and is rejected. Web content and extensions cannot forge the header at all ((#browser-processing)).
 
 ## What Is and Is Not Protected
 
-Protected: the authorization code — and the other authorization response parameters — never appear in URLs, eliminating exposure via browser history, web server and proxy logs, Referer headers, analytics and crash reporting, URL sharing, screenshots, and copy/paste; and both parties receive a browser-attested origin for the other side of each redirect.
+Protected: the authorization code, and the other authorization response parameters, never appear in URLs, eliminating exposure via browser history, web server and proxy logs, Referer headers, analytics and crash reporting, URL sharing, screenshots, and copy/paste; and both parties receive a browser-attested origin for the other side of each redirect.
 
 Not protected: parameters in transit (TLS remains REQUIRED for every HTTP request and response carrying the header); the authorization request parameters, which remain in the URL by design; the parties themselves (a malicious AS or client is out of scope); and injection of an attacker's *legitimate* authorization response at a client (authorization code injection), for which PKCE remains REQUIRED.
 
@@ -355,7 +355,7 @@ Receiving parties MUST parse the header as a Structured Field [@!RFC9651] and re
 
 ## Relationship to Existing Mechanisms
 
-This mechanism supplements and does not relax any existing requirement: redirect URI registration and exact matching, `state` (or equivalent CSRF protection), PKCE [@RFC7636], and the mitigations of [@!RFC9700] all continue to apply. The `origin` member provides a browser-attested complement to `iss` [@RFC9207] for mix-up defense, and browser-attested client origin strengthens the AS's ability to detect requests initiated from unexpected origins — supplementing, not replacing, redirect URI validation.
+This mechanism supplements and does not relax any existing requirement: redirect URI registration and exact matching, `state` (or equivalent CSRF protection), PKCE [@RFC7636], and the mitigations of [@!RFC9700] all continue to apply. The `origin` member provides a browser-attested complement to `iss` [@RFC9207] for mix-up defense, and browser-attested client origin strengthens the AS's ability to detect requests initiated from unexpected origins, supplementing rather than replacing redirect URI validation.
 
 # Privacy Considerations
 
@@ -369,11 +369,11 @@ Authorization response parameters never appear in URLs, browser history, Referer
 
 ## No New Cross-Site Information Flow
 
-This mechanism activates only on OAuth authorization navigations — flows that by design already convey the client's identity to the AS (`client_id`, `redirect_uri`) in the URL. The browser-attested `origin` gives the AS nothing it does not already receive; it makes an existing claim reliable rather than adding a new one. On the return leg, the AS origin delivered to the client identifies a party the client chose and already knows. The header is invisible to all third parties, so it cannot be used as a side channel between origins. What remains true — and is unchanged by this specification — is that front-channel OAuth inherently reveals to the AS that a user is authorizing a given client; only back-channel protocols such as [@?I-D.hardt-oauth-aauth-protocol] change that.
+This mechanism activates only on OAuth authorization navigations: flows that by design already convey the client's identity to the AS (`client_id`, `redirect_uri`) in the URL. The browser-attested `origin` gives the AS nothing it does not already receive; it makes an existing claim reliable rather than adding a new one. On the return leg, the AS origin delivered to the client identifies a party the client chose and already knows. The header is invisible to all third parties, so it cannot be used as a side channel between origins. What remains true, and is unchanged by this specification, is that front-channel OAuth inherently reveals to the AS that a user is authorizing a given client; only back-channel protocols such as [@?I-D.hardt-oauth-aauth-protocol] change that.
 
 ## Origin and Path Disclosure
 
-The `origin` member is a reliable equivalent of a scheme-plus-host Referer, and a validated `path` member discloses a path prefix — but only to the party the redirect was addressed to, which in OAuth already knows the counterparty. Unlike Referer, these members cannot be stripped by the user without the flow degrading to URL parameters (which disclose strictly more). This trade-off — reliable counterparty verification over origin hiding — is appropriate only where mutual knowledge of the parties is expected, as it is in OAuth; it is one of the reasons this mechanism is OAuth-specific rather than generic ((#rationale-oauth-specific)).
+The `origin` member is a reliable equivalent of a scheme-plus-host Referer, and a validated `path` member discloses a path prefix, but only to the party the redirect was addressed to, which in OAuth already knows the counterparty. Unlike Referer, these members cannot be stripped by the user without the flow degrading to URL parameters (which disclose strictly more). This trade-off, favoring reliable counterparty verification over origin hiding, is appropriate only where mutual knowledge of the parties is expected, as it is in OAuth; it is one of the reasons this mechanism is OAuth-specific rather than generic ((#rationale-oauth-specific)).
 
 ## User Transparency
 
@@ -434,7 +434,7 @@ The authorization code is now in the URL: recorded in browser history, in the cl
 
 ## With This Mechanism
 
-Client redirects to the AS — the URL is identical to today, plus the header:
+Client redirects to the AS; the URL is identical to today, plus the header:
 
 ```
 HTTP/1.1 303 See Other
@@ -459,7 +459,7 @@ OAuth-Authorization: query="client_id=abc&response_type=code
     origin="https://app.example", path="/portal/"
 ```
 
-The AS verifies the `query` member matches the URL, verifies `https://app.example` is consistent with the registered redirect URI for `client_id=abc`, and — knowing the browser and client support protected authorization responses — returns the response in the header with a clean redirect URI:
+The AS verifies the `query` member matches the URL, verifies `https://app.example` is consistent with the registered redirect URI for `client_id=abc`, and, knowing the browser and client support protected authorization responses, returns the response in the header with a clean redirect URI:
 
 ```
 HTTP/1.1 303 See Other
@@ -488,11 +488,11 @@ A generic redirect-header mechanism gives the browser no way to know when protec
 
 ## Why a Single Header Field {#rationale-single}
 
-The browser's processing is identical on both legs of the flow, so one header field name means one processing rule, one forbidden header name in Fetch, and one IANA registration. Separate "request" and "response" names would also invite conflating the OAuth message direction with the HTTP message direction — the header appears in an HTTP response and then an HTTP request on *each* leg. The receiving endpoint's role already determines which OAuth message the header carries, and delivery to the wrong context fails closed ((#security-cross-context)).
+The browser's processing is identical on both legs of the flow, so one header field name means one processing rule, one forbidden header name in Fetch, and one IANA registration. Separate "request" and "response" names would also invite conflating the OAuth message direction with the HTTP message direction: the header appears in an HTTP response and then an HTTP request on *each* leg. The receiving endpoint's role already determines which OAuth message the header carries, and delivery to the wrong context fails closed ((#security-cross-context)).
 
 ## Why Not Cryptographic Protection of Parameters
 
-The exposure this document addresses is at the endpoints, not on the channel: TLS already protects parameters in transit. An encrypted or signed response (JARM [@JARM]) placed in a URL is still a URL — still written to history, still in access logs, still sent in Referer headers, still shareable. Cryptographic protection also requires key distribution between every client and AS pair, and no cryptographic scheme can attest a client's *web origin* — only the user agent knows which origin actually initiated a navigation. The mechanisms compose: a JARM response can be carried in the header's `query` member, gaining URL-freedom on top of its integrity properties.
+The exposure this document addresses is at the endpoints, not on the channel: TLS already protects parameters in transit. An encrypted or signed response (JARM [@JARM]) placed in a URL is still a URL: still written to history, still in access logs, still sent in Referer headers, still shareable. Cryptographic protection also requires key distribution between every client and AS pair, and no cryptographic scheme can attest a client's *web origin*: only the user agent knows which origin actually initiated a navigation. The mechanisms compose: a JARM response can be carried in the header's `query` member, gaining URL-freedom on top of its integrity properties.
 
 ## Why Not Move to the Back Channel {#rationale-back-channel}
 
@@ -500,19 +500,19 @@ Not putting sensitive parameters in the front channel at all is the strongest pr
 
 ## Why the Authorization Request Parameters Stay in the URL
 
-Compatibility, permanently. The authorization request URI is processed by every existing AS with no changes, and the client can never know whether the user's browser supports this mechanism, so it always sends both ((#deployment-considerations)). The `query` member on this leg is not for confidentiality — authorization request parameters are not secrets — but provides a canonical copy bound to browser-attested origin metadata, a tamper check ((#as-behavior-request)), and the capability signal that unlocks the protected authorization response.
+Compatibility, permanently. The authorization request URI is processed by every existing AS with no changes, and the client can never know whether the user's browser supports this mechanism, so it always sends both ((#deployment-considerations)). The `query` member on this leg is not for confidentiality (authorization request parameters are not secrets) but provides a canonical copy bound to browser-attested origin metadata, a tamper check ((#as-behavior-request)), and the capability signal that unlocks the protected authorization response.
 
 ## Why a Structured Field Dictionary Wrapping a Query String
 
-The outer Structured Field [@!RFC9651] layer gives the browser a well-defined, extensible place for the members it owns (`origin`, `path`) without colliding with the OAuth parameter namespace. The OAuth parameters themselves stay query-string encoded inside the `query` member, so every implementation parses them with the same code path it uses for URLs today — no new parameter encoding, and no dual-parser inconsistency bugs.
+The outer Structured Field [@!RFC9651] layer gives the browser a well-defined, extensible place for the members it owns (`origin`, `path`) without colliding with the OAuth parameter namespace. The OAuth parameters themselves stay query-string encoded inside the `query` member, so every implementation parses them with the same code path it uses for URLs today: no new parameter encoding, and no dual-parser inconsistency bugs.
 
 ## Why Redirect Responses Only (Why Not form_post)
 
-This mechanism applies exclusively to redirect responses. The `form_post` response mode places parameters in the document as form fields, where they are visible to page JavaScript and extensions no matter what the browser does with headers — there is nothing there for the browser to protect. Redirects are also what the overwhelming majority of deployments use, and extending them is a library change rather than an infrastructure change.
+This mechanism applies exclusively to redirect responses. The `form_post` response mode places parameters in the document as form fields, where they are visible to page JavaScript and extensions no matter what the browser does with headers; there is nothing there for the browser to protect. Redirects are also what the overwhelming majority of deployments use, and extending them is a library change rather than an infrastructure change.
 
 ## Why the AS Rejects on Query Mismatch, Rather Than the Browser Dropping the Header {#rationale-mismatch}
 
-If the browser dropped the header when the `query` member disagreed with the URL, an attacker able to modify the URL query could make the header vanish — silently downgrading the flow to unprotected URL parameters. Instead the browser always delivers the header, and the AS treats a mismatch as an error ((#as-behavior-request)). Tampering becomes a visible failure rather than a silent downgrade.
+If the browser dropped the header when the `query` member disagreed with the URL, an attacker able to modify the URL query could make the header vanish, silently downgrading the flow to unprotected URL parameters. Instead the browser always delivers the header, and the AS treats a mismatch as an error ((#as-behavior-request)). Tampering becomes a visible failure rather than a silent downgrade.
 
 ## Why Not a Sec-Prefixed Name
 
@@ -520,7 +520,7 @@ The `Sec-` prefix means only that web content cannot *set* a header; extensions 
 
 ## Why Not a response_mode Value {#rationale-response-mode}
 
-The protected authorization response is functionally a new response mode, but it is negotiated by demonstrated browser capability — the header's arrival with the authorization request — rather than requested by the client. A `response_mode` parameter would allow a client to request behavior the user's browser may not support, which cannot work. In-band capability signaling is the only reliable negotiation.
+The protected authorization response is functionally a new response mode, but it is negotiated by demonstrated browser capability (the header's arrival with the authorization request) rather than requested by the client. A `response_mode` parameter would allow a client to request behavior the user's browser may not support, which cannot work. In-band capability signaling is the only reliable negotiation.
 
 ## Why the Authorization Response Is Not Readable by JavaScript {#rationale-spa}
 
@@ -528,7 +528,7 @@ Deliberate. [@!RFC9700] and current browser-based-app guidance steer authorizati
 
 ## Why Native Application Flows Are Out of Scope {#rationale-native}
 
-The header cannot survive the custom-scheme or app-link handoff from the system browser back to a native app: the operating system delivers a URL, not headers. The threat model also differs — dedicated system authentication sessions do not run page JavaScript or extensions in the same way. Native flows continue to use their existing mechanisms (with PKCE, per [@RFC8252]).
+The header cannot survive the custom-scheme or app-link handoff from the system browser back to a native app: the operating system delivers a URL, not headers. The threat model also differs: dedicated system authentication sessions do not run page JavaScript or extensions in the same way. Native flows continue to use their existing mechanisms (with PKCE, per [@RFC8252]).
 
 ## Why Browser-Attested Origin When iss Exists
 
